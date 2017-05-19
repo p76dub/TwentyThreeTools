@@ -4,8 +4,9 @@
 """
 Module that contains everything related to the Graphical User Interface of the main application.
 """
-import sys
 import PyQt5.QtWidgets as QtWidgets
+
+import src.core.model
 
 
 class TwentyThreeTools(QtWidgets.QMainWindow):
@@ -28,7 +29,7 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
         """
         Create the model associated to the graphical interface.
         """
-        pass
+        self._model = src.core.model.TwentyThreeToolsModel()
 
     def _create_view(self):
         """
@@ -61,10 +62,3 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
         Create links between models and graphical components.
         """
         pass
-
-if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
-    twenty_three = TwentyThreeTools()
-    twenty_three.show()
-
-    sys.exit(app.exec_())
