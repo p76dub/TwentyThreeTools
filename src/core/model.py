@@ -6,6 +6,7 @@ Contain core's models :
 import os
 import importlib.util
 import PyQt5.QtCore as QtCore
+import PyQt5.QtWidgets as QtWidgets
 
 
 class TwentyThreeToolsModel(QtCore.QObject):
@@ -95,3 +96,42 @@ class TwentyThreeToolsModel(QtCore.QObject):
         self._loaded_modules.add(mod)
         return getattr(mod, module_name)()
 
+
+class TwentyThreeToolsMenuBarModel(QtCore.QObject):
+    """
+    This model manages the application's menubar. Menus are:
+        - File
+        - Plugins
+    """
+
+    close_app = QtCore.pyqtSignal()
+
+    def __init__(self):
+        """
+        Create a new instance. At the beginning, File menu contains only one action : quit. 
+        Plugins menu is empty.
+        """
+        super().__init__()
+        self._menus = [
+            self._create_file_menu(),
+            QtWidgets.QMenu('&Plugins'),
+        ]
+
+    def get_menus(self):
+        """
+        Get menus.
+        :return: A menu list (list<QMenu>)
+        """
+        return list(self._menus)
+
+    def _create_file_menu(self):
+        """
+        Create the file menu
+        :return: a QMenu instance.
+        """
+        menu = QtWidgets.QMenu('&File')
+
+        quit = menu.addAction('&Quit')
+        quit.triggered.connect(lambda event: self.close_app.emit())
+
+        return menu

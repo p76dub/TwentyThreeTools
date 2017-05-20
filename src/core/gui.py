@@ -4,8 +4,8 @@
 """
 Module that contains everything related to the Graphical User Interface of the main application.
 """
-import PyQt5.QtWidgets as QtWidgets
 
+import PyQt5.QtWidgets as QtWidgets
 import src.core.model
 
 
@@ -30,6 +30,7 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
         Create the model associated to the graphical interface.
         """
         self._model = src.core.model.TwentyThreeToolsModel()
+        self._menu_model = src.core.model.TwentyThreeToolsMenuBarModel()
 
     def _create_view(self):
         """
@@ -43,8 +44,8 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
         self._main_view.setStretchFactor(0, 1)
         self._main_view.setStretchFactor(1, 3)
 
-        self.menuBar().addMenu('&Fichier')
-        self.menuBar().addMenu('&Editer')
+        for menu in self._menu_model.get_menus():
+            self.menuBar().addMenu(menu)
 
         self.setWindowTitle('TwentyThreeTools')
 
@@ -61,4 +62,4 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
         """
         Create links between models and graphical components.
         """
-        pass
+        self._menu_model.close_app.connect(self.close)
