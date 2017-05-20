@@ -67,7 +67,8 @@ class TwentyThreeToolsModel(QtCore.QObject):
         for dir in dirs:
             for file in os.listdir(dir):
                 filename = file.split('.')[0]
-                self._plugins.add((filename, dir))
+                if filename != '__init__':
+                    self._plugins.add((filename, dir))
 
         self.plugins_changed.emit(self.plugins)
 
@@ -85,7 +86,7 @@ class TwentyThreeToolsModel(QtCore.QObject):
         # If module has been already loaded, return a new instance
         for mod in self._loaded_modules:
             if mod.__name__.split('.')[-1] == module_name:
-                return getattr(mod, module_name)()
+                return getattr(mod, module_name.capitalize())()
 
         # Else load module, add it to the set and return the instance
         spec = importlib.util.spec_from_file_location(module_name,
@@ -94,7 +95,7 @@ class TwentyThreeToolsModel(QtCore.QObject):
         spec.loader.exec_module(mod)
 
         self._loaded_modules.add(mod)
-        return getattr(mod, module_name)()
+        return getattr(mod, module_name.capitalize())()
 
 
 class TwentyThreeToolsMenuBarModel(QtCore.QObject):
@@ -112,17 +113,19 @@ class TwentyThreeToolsMenuBarModel(QtCore.QObject):
         Plugins menu is empty.
         """
         super().__init__()
-        self._menus = [
-            self._create_file_menu(),
-            QtWidgets.QMenu('&Plugins'),
-        ]
+        self._menus = {
+            'File' : self._create_file_menu(),
+            'Plugins' : QtWidgets.QMenu('&Plugins'),
+        }
 
     def get_menus(self):
         """
         Get menus.
         :return: A menu list (list<QMenu>)
         """
-        return list(self._menus)
+        rtn = [menu for _, menu in self._menus.items()]
+        rtn.sort(key=lambda m: m.title())
+        return rtn
 
     def _create_file_menu(self):
         """
@@ -135,3 +138,15 @@ class TwentyThreeToolsMenuBarModel(QtCore.QObject):
         quit.triggered.connect(lambda event: self.close_app.emit())
 
         return menu
+
+    @QtCore.pyqtSlot(list, name='plugins')
+    def plugins(self, plugins_list):
+        """
+        These slot accept a list<str> object and updates the plugins menu in consequence.
+        :param plugins_list: the list of plugins (list<str>)
+        """
+        menu = self._menus['Plugins']
+        menu.clear()
+
+        for plugin in plugins_list:
+            menu.addAction(plugin)

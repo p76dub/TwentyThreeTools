@@ -6,6 +6,7 @@ Module that contains everything related to the Graphical User Interface of the m
 """
 
 import PyQt5.QtWidgets as QtWidgets
+import PyQt5.QtCore as QtCore
 import src.core.model
 
 
@@ -19,11 +20,12 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
         Create a new TwentyThreeTools widget.
         :return: a new instance of TwentyThreeTools
         """
-        super().__init__()
+        super().__init__(flags=QtCore.Qt.Window)
         self._create_model()
         self._create_view()
         self._place_components()
         self._create_controller()
+        self._first_update()
 
     def _create_model(self):
         """
@@ -63,3 +65,10 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
         Create links between models and graphical components.
         """
         self._menu_model.close_app.connect(self.close)
+        self._model.plugins_changed.connect(self._menu_model.plugins)
+
+    def _first_update(self):
+        """
+        Updates view according to models state (also update some models according to others)
+        """
+        self._menu_model.plugins(self._model.plugins)
