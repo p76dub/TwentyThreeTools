@@ -16,26 +16,38 @@ class TwentyThreeToolsModel(QtCore.QObject):
 
     locations_changed = QtCore.pyqtSignal(frozenset)
     plugins_changed = QtCore.pyqtSignal(list)
+    sessions_updated = QtCore.pyqtSignal(dict)
 
     def __init__(self, plugins=frozenset(['extra'])):
         """
         Create a new TwentyThreeToolsModel. At the beginning, no sessions are stored. The list of available
         plugins has been build.
         :arg plugins: a set of folders in which plugins are. Default is set(['extra'])
+        :post:
+            
         """
         super().__init__()
-        self._plugins = set()
+        self._plugins = dict()
         self._locations = set(plugins)
         self._loaded_modules = set()
+        self._sessions = dict()
 
         self._look_for_plugins()
+
+    @property
+    def sessions(self):
+        """
+        Sessions' dictionnary : name (str) -> session (object)
+        :return: dict of sessions 
+        """
+        return dict(self._sessions)
 
     @property
     def plugins(self):
         """
         A list of available plugins.
         """
-        return [cpl[0] for cpl in self._plugins]
+        return list(self._plugins.keys())
 
     @property
     def locations(self):
@@ -67,35 +79,39 @@ class TwentyThreeToolsModel(QtCore.QObject):
         for dir in dirs:
             for file in os.listdir(dir):
                 filename = file.split('.')[0]
-                if filename != '__init__':
-                    self._plugins.add((filename, dir))
+                if os.path.isfile(os.path.join(dir, file)) and filename != '__init__':
+                    self._plugins[filename] = dir
 
         self.plugins_changed.emit(self.plugins)
 
-    def load_plugin(self, index):
+    def load_plugin(self, name):
         """
         Load the plugin at index `index` in self.plugins.
-        :param index: the index of the plugin (int)
-        :return: an instance of the plugin (object) or None if not found
+        :param name: the name of the plugin (str)
+        :return: an instance of the plugin (object)
+        :raise KeyError: plugin with name `name` has not been found
         """
-        if 0 > index >= len(self._plugins):
-            return None
-
-        module_name, dir_path = self._plugins[index]
+        module_name, dir_path = name, self._plugins[name]
 
         # If module has been already loaded, return a new instance
         for mod in self._loaded_modules:
             if mod.__name__.split('.')[-1] == module_name:
-                return getattr(mod, module_name.capitalize())()
+                plugin = getattr(mod, module_name.capitalize())()
+                self._sessions[module_name + str(hash(plugin))] = plugin
+                self.sessions_updated.emit(self.sessions)
+                return module_name + str(hash(plugin))
 
         # Else load module, add it to the set and return the instance
         spec = importlib.util.spec_from_file_location(module_name,
                                                       os.path.join(dir_path, module_name + '.py'))
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
-
         self._loaded_modules.add(mod)
-        return getattr(mod, module_name.capitalize())()
+
+        plugin = getattr(mod, module_name.capitalize())()
+        self._sessions[module_name + str(hash(plugin))] = plugin
+        self.sessions_updated.emit(self.sessions)
+        return module_name + str(hash(plugin))
 
 
 class TwentyThreeToolsMenuBarModel(QtCore.QObject):
@@ -106,6 +122,7 @@ class TwentyThreeToolsMenuBarModel(QtCore.QObject):
     """
 
     close_app = QtCore.pyqtSignal()
+    plugin_selected = QtCore.pyqtSignal(str)
 
     def __init__(self):
         """
@@ -114,8 +131,8 @@ class TwentyThreeToolsMenuBarModel(QtCore.QObject):
         """
         super().__init__()
         self._menus = {
-            'File' : self._create_file_menu(),
-            'Plugins' : QtWidgets.QMenu('&Plugins'),
+            'File': self._create_file_menu(),
+            'Plugins': QtWidgets.QMenu('&Plugins'),
         }
 
     def get_menus(self):
@@ -149,4 +166,18 @@ class TwentyThreeToolsMenuBarModel(QtCore.QObject):
         menu.clear()
 
         for plugin in plugins_list:
-            menu.addAction(plugin)
+            action = self._create_plugin_action(plugin)
+            action.setParent(menu)
+            menu.addAction(action)
+
+    def _create_plugin_action(self, plugin):
+        """
+        Create the action for the plugin `plugin`
+        :param plugin: name of the plugin
+        :return: a QAction
+        """
+        action = QtWidgets.QAction()
+        action.setText(plugin)
+        action.triggered.connect(lambda e: self.plugin_selected.emit(plugin))
+
+        return action

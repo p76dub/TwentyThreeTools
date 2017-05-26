@@ -40,7 +40,7 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
         """
         self._plugin_view = QtWidgets.QStackedWidget()
 
-        self._sessions = QtWidgets.QListView()
+        self._sessions = QtWidgets.QListWidget()
 
         self._main_view = QtWidgets.QSplitter(self)
         self._main_view.setStretchFactor(0, 1)
@@ -66,9 +66,82 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
         """
         self._menu_model.close_app.connect(self.close)
         self._model.plugins_changed.connect(self._menu_model.plugins)
+        self._menu_model.plugin_selected.connect(self._add_plugin_to_session)
+        self._sessions.currentRowChanged.connect(self._plugin_view.setCurrentIndex)
+
+    def _add_plugin_to_session(self, plugname):
+        """
+        Add the plugin with name `plugname` to the list of opened sessions and select it.
+        :param plugname: the name of the desired plugin (str)
+        """
+        try:
+            name = self._model.load_plugin(plugname)
+        except Exception as e:
+            self._show_message(
+                text='An error occurs',
+                info='The plugin {} can\'t be loaded, please check your extra folder.'
+                    .format(plugname),
+                details='Error : {}'.format(str(e)),
+                icon=QtWidgets.QMessageBox.Critical,
+            )
+        else:
+            self._sessions.addItem(name)
+            self._plugin_view.addWidget(self._model.sessions[name])
+
 
     def _first_update(self):
         """
         Updates view according to models state (also update some models according to others)
         """
         self._menu_model.plugins(self._model.plugins)
+
+    def _show_message(self, **options):
+        """
+        Show a dialog to inform the client that something append.
+        :param options: a dict that can have this keys:
+            - text : the text displayed
+            - info : an additional text to inform
+            - details : an more precise text
+            - std_bts : a union of QMessageBox buttons
+            - dft_bt : the default button
+            - icon : icon displayed in the dialog
+        :return: return value of the dialog execution 
+        """
+        opts = {
+            'text': 'default',
+        }
+        opts.update(options)
+
+        dialog = QtWidgets.QMessageBox()
+        dialog.setText(opts['text'])
+        dialog.setWindowTitle(opts['text'])
+
+        try:
+            dialog.setInformativeText(opts['info'])
+        except:
+            pass
+
+        try:
+            dialog.setDetailedText(opts['details'])
+        except:
+            pass
+
+        try:
+            dialog.setStandardButtons(opts['std_bts'])
+        except:
+            pass
+
+        try:
+            dialog.setDefaultButton(opts['dft_bt'])
+        except:
+            pass
+
+        try:
+            dialog.setIcon(opts['icon'])
+        except:
+            try:
+                dialog.setIconPixmap(opts['icon'])
+            except:
+                pass
+
+        return dialog.exec_()
