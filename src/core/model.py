@@ -118,11 +118,16 @@ class TwentyThreeToolsModel(QtCore.QObject):
 class SessionModel():
     """
     A SessionModel is the model of the widget SessionWidget.
+    :inv:
+        item_count() >= 0
+        get_list_model() is not None
     """
 
     def __init__(self):
         """
         Create a new empty SessionModel.
+        :post:
+            item_count() == 0
         """
         self._list_model = QtGui.QStandardItemModel()
         self._sessions = list()
@@ -147,7 +152,7 @@ class SessionModel():
         :param index: the index of the value looked
         :return: the value stored
         """
-        if index < 0 or index > self.item_count():
+        if index < 0 or index >= self.item_count():
             raise ValueError('index should be between 0 and {} (inclusive)'
                              .format(self.item_count()))
 
@@ -155,7 +160,14 @@ class SessionModel():
 
     def add_item(self, value, str_value=None):
         """
-        Add an item into the list. If str_value is not provided, str(value) will be used.
+        Add an item at the end of the list. If str_value is not provided, str(value) will be used.
+        :post:
+            item_count() == old item_count() + 1
+            get_list_model() == old get_list_model()
+            forall i in [0..old item_count()[:
+                get_value_at(i) == old get_value_at(i)
+            get_value_at(old item_count()) == value
+            the correct value is displayed
         :param value: value that can be retrieved
         :param str_value: text displayed in the list view (optional)
         """
@@ -166,15 +178,44 @@ class SessionModel():
     def remove_item(self, index):
         """
         Remove item at position index
+        :pre:
+            0 <= index < item_count()
+        :post:
+            item_count() == old item_count() - 1
+            get_list_model() == old get_list_model()
+            forall i in [0..item_count()[
+                i < index => get_value_at(i) == old get_value_at(i)
+                i >= index => get_value_at(i) == ols get_value_at(i + 1)
+            texts displayed have shifted after position index - 1
         :param index: item's position that will be removed. Items after that position will be
             shifted
         """
-        if index < 0 or index > self.item_count():
+        if index < 0 or index >= self.item_count():
             raise ValueError('index should be between 0 and {} (inclusive)'
                              .format(self.item_count()))
 
         self._list_model.removeRow(index)
         self._sessions.pop(index)
+
+    def set_text_at(self, index, text):
+        """
+        Set the list entry text at position index.
+        :pre:
+            0 <= index < item_count()
+        :post:
+            item_count() == old item_count()
+            get_list_model() == old get_list_model()
+            forall i in [0..item_count()[:
+                get_value_at(i) == old get_value_at(i)
+            text displayed at position index is now text
+        :param index: the position
+        :param text: the new text
+        """
+        if index < 0 or index >= self.item_count():
+            raise ValueError('index should be between 0 and {} (inclusive)'
+                             .format(self.item_count()))
+
+        self._list_model.setItem(index, text)
 
 
 class TwentyThreeToolsMenuBarModel(QtCore.QObject):
