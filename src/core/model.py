@@ -7,6 +7,7 @@ import os
 import importlib.util
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
+import PyQt5.QtGui as QtGui
 
 
 class TwentyThreeToolsModel(QtCore.QObject):
@@ -112,6 +113,68 @@ class TwentyThreeToolsModel(QtCore.QObject):
         self._sessions[module_name + str(hash(plugin))] = plugin
         self.sessions_updated.emit(self.sessions)
         return module_name + str(hash(plugin))
+
+
+class SessionModel():
+    """
+    A SessionModel is the model of the widget SessionWidget.
+    """
+
+    def __init__(self):
+        """
+        Create a new empty SessionModel.
+        """
+        self._list_model = QtGui.QStandardItemModel()
+        self._sessions = list()
+
+    def item_count(self):
+        """
+        Give the amount of items in the list.
+        :return: a positive integer
+        """
+        return len(self._sessions)
+
+    def get_list_model(self):
+        """
+        Get the QStandardItemModel to connect it with the view.
+        :return: the model (QStandradItemModel)
+        """
+        return self._list_model
+
+    def get_value_at(self, index):
+        """
+        Get the value at position index.
+        :param index: the index of the value looked
+        :return: the value stored
+        """
+        if index < 0 or index > self.item_count():
+            raise ValueError('index should be between 0 and {} (inclusive)'
+                             .format(self.item_count()))
+
+        return self._sessions[index]
+
+    def add_item(self, value, str_value=None):
+        """
+        Add an item into the list. If str_value is not provided, str(value) will be used.
+        :param value: value that can be retrieved
+        :param str_value: text displayed in the list view (optional)
+        """
+        displayed_text = str_value if str_value is not None else str(value)
+        self._list_model.appendRow(displayed_text)
+        self._sessions.append(value)
+
+    def remove_item(self, index):
+        """
+        Remove item at position index
+        :param index: item's position that will be removed. Items after that position will be
+            shifted
+        """
+        if index < 0 or index > self.item_count():
+            raise ValueError('index should be between 0 and {} (inclusive)'
+                             .format(self.item_count()))
+
+        self._list_model.removeRow(index)
+        self._sessions.pop(index)
 
 
 class TwentyThreeToolsMenuBarModel(QtCore.QObject):
