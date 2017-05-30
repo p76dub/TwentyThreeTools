@@ -78,7 +78,7 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
         :param plugname: the name of the desired plugin (str)
         """
         try:
-            name = self._model.load_plugin(plugname)
+            name, plugin = self._model.load_plugin(plugname)
         except Exception as e:
             self._show_message(
                 text='An error occurs',
@@ -88,8 +88,8 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
                 icon=QtWidgets.QMessageBox.Critical,
             )
         else:
-            self._sessions.get_model().add_item(self._model.sessions[name], name)
-            self._plugin_view.addWidget(self._model.sessions[name])
+            self._sessions.get_model().add_item(plugin, name)
+            self._plugin_view.addWidget(plugin)
 
 
     def _first_update(self):
@@ -164,7 +164,7 @@ class SessionWidget(QtWidgets.QWidget):
     The session widget is a list of sessions with some extra features like a popup menu.
     """
 
-    row_removed = QtCore.pyqtSignal(int)
+    row_removed = QtCore.pyqtSignal(int, QtWidgets.QWidget)
     row_changed = QtCore.pyqtSignal(int)
 
     def __init__(self, parent=None, flags=QtCore.Qt.Widget, model=src.core.model.SessionModel()):
@@ -214,6 +214,7 @@ class SessionWidget(QtWidgets.QWidget):
         list_handler.right_click.connect(self._show_popup_menu)
         self._list.installEventFilter(list_handler)
         self._list.selectionModel().currentRowChanged.connect(self._emit_row_changed)
+        self._model.item_removed.connect(self.row_removed.emit)
 
     @QtCore.pyqtSlot(QtCore.QPoint, name='_show_popup_menu')
     def _show_popup_menu(self, point):
@@ -235,7 +236,6 @@ class SessionWidget(QtWidgets.QWidget):
         :param index: index of the entry (QModelIndex)
         """
         self._model.remove_item(index.row())
-        self.row_removed.emit(index.row())
 
     def _emit_row_changed(self, new_index, old_index):
         """

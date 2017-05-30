@@ -17,15 +17,13 @@ class TwentyThreeToolsModel(QtCore.QObject):
 
     locations_changed = QtCore.pyqtSignal(frozenset)
     plugins_changed = QtCore.pyqtSignal(list)
-    sessions_updated = QtCore.pyqtSignal(dict)
 
     def __init__(self, plugins=frozenset(['extra'])):
         """
-        Create a new TwentyThreeToolsModel. At the beginning, no sessions are stored. The list of available
-        plugins has been build.
+        Create a new TwentyThreeToolsModel. At the beginning, no sessions are stored. The list
+        of available plugins has been build.
         :arg plugins: a set of folders in which plugins are. Default is set(['extra'])
         :post:
-            sessions == dict()
             plugins contains available plugins
             locations == set(plugins)
         """
@@ -33,17 +31,8 @@ class TwentyThreeToolsModel(QtCore.QObject):
         self._plugins = dict()
         self._locations = set(plugins)
         self._loaded_modules = set()
-        self._sessions = dict()
 
         self._look_for_plugins()
-
-    @property
-    def sessions(self):
-        """
-        Sessions' dictionnary : name (str) -> session (object)
-        :return: dict of sessions 
-        """
-        return dict(self._sessions)
 
     @property
     def plugins(self):
@@ -66,8 +55,11 @@ class TwentyThreeToolsModel(QtCore.QObject):
         """
         Set the new locations of plugins
         :param paths: folder names (iterable)
+        :post:
+            locations == set(paths)
+
         """
-        self._locations = frozenset(paths)
+        self._locations = set(paths)
         self.locations_changed.emit(self._locations)
 
         self._loaded_modules.clear()
@@ -101,9 +93,7 @@ class TwentyThreeToolsModel(QtCore.QObject):
         for mod in self._loaded_modules:
             if mod.__name__.split('.')[-1] == module_name:
                 plugin = getattr(mod, module_name.capitalize())()
-                self._sessions[module_name + str(hash(plugin))] = plugin
-                self.sessions_updated.emit(self.sessions)
-                return module_name + str(hash(plugin))
+                return module_name + str(hash(plugin)), plugin
 
         # Else load module, add it to the set and return the instance
         spec = importlib.util.spec_from_file_location(module_name,
@@ -113,12 +103,10 @@ class TwentyThreeToolsModel(QtCore.QObject):
         self._loaded_modules.add(mod)
 
         plugin = getattr(mod, module_name.capitalize())()
-        self._sessions[module_name + str(hash(plugin))] = plugin
-        self.sessions_updated.emit(self.sessions)
-        return module_name + str(hash(plugin))
+        return module_name + str(hash(plugin)), plugin
 
 
-class SessionModel():
+class SessionModel(QtCore.QObject):
     """
     A SessionModel is the model of the widget SessionWidget.
     :inv:
@@ -126,12 +114,16 @@ class SessionModel():
         get_list_model() is not None
     """
 
-    def __init__(self):
+    item_removed = QtCore.pyqtSignal(int, QtWidgets.QWidget)
+
+    def __init__(self, parent=None):
         """
         Create a new empty SessionModel.
+        :parent: owner of the instance
         :post:
             item_count() == 0
         """
+        super().__init__(parent=parent)
         self._list_model = QtGui.QStandardItemModel()
         self._sessions = list()
 
@@ -199,11 +191,8 @@ class SessionModel():
             raise ValueError('index should be between 0 and {} (inclusive)'
                              .format(self.item_count() - 1))
 
-        try:
-            self._list_model.removeRow(index)
-        except Exception as e:
-            print(str(e))
-        self._sessions.pop(index)
+        self._list_model.removeRow(index)
+        self.item_removed.emit(index, self._sessions.pop(index))
 
     def set_text_at(self, index, text):
         """
