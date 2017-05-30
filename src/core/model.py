@@ -25,7 +25,9 @@ class TwentyThreeToolsModel(QtCore.QObject):
         plugins has been build.
         :arg plugins: a set of folders in which plugins are. Default is set(['extra'])
         :post:
-            
+            sessions == dict()
+            plugins contains available plugins
+            locations == set(plugins)
         """
         super().__init__()
         self._plugins = dict()
@@ -47,6 +49,7 @@ class TwentyThreeToolsModel(QtCore.QObject):
     def plugins(self):
         """
         A list of available plugins.
+        :return: a list of available plugins
         """
         return list(self._plugins.keys())
 
@@ -54,7 +57,7 @@ class TwentyThreeToolsModel(QtCore.QObject):
     def locations(self):
         """
         A frozenset of locations where plugins are.
-        :return: a frozenset
+        :return: a frozenset of locations
         """
         return frozenset(self._locations)
 
