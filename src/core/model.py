@@ -154,7 +154,7 @@ class SessionModel():
         """
         if index < 0 or index >= self.item_count():
             raise ValueError('index should be between 0 and {} (inclusive)'
-                             .format(self.item_count()))
+                             .format(self.item_count() - 1))
 
         return self._sessions[index]
 
@@ -172,7 +172,9 @@ class SessionModel():
         :param str_value: text displayed in the list view (optional)
         """
         displayed_text = str_value if str_value is not None else str(value)
-        self._list_model.appendRow(displayed_text)
+        item = QtGui.QStandardItem()
+        item.setText(displayed_text)
+        self._list_model.appendRow(item)
         self._sessions.append(value)
 
     def remove_item(self, index):
@@ -192,9 +194,12 @@ class SessionModel():
         """
         if index < 0 or index >= self.item_count():
             raise ValueError('index should be between 0 and {} (inclusive)'
-                             .format(self.item_count()))
+                             .format(self.item_count() - 1))
 
-        self._list_model.removeRow(index)
+        try:
+            self._list_model.removeRow(index)
+        except Exception as e:
+            print(str(e))
         self._sessions.pop(index)
 
     def set_text_at(self, index, text):
@@ -213,9 +218,11 @@ class SessionModel():
         """
         if index < 0 or index >= self.item_count():
             raise ValueError('index should be between 0 and {} (inclusive)'
-                             .format(self.item_count()))
+                             .format(self.item_count() - 1))
 
-        self._list_model.setItem(index, text)
+        item = QtGui.QStandardItem()
+        item.setText(text)
+        self._list_model.setItem(index, item)
 
 
 class TwentyThreeToolsMenuBarModel(QtCore.QObject):
