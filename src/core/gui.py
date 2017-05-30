@@ -261,16 +261,3 @@ class _SessionListEventHandler(QtCore.QObject):
             self.right_click.emit(event.globalPos())
             return True
         return super().eventFilter(obj, event)
-
-if __name__ == '__main__':
-    import sys
-
-    app = QtWidgets.QApplication(sys.argv)
-    widget = SessionWidget(flags=QtCore.Qt.Window)
-    model = widget.get_model()
-    model.add_item('plop')
-    model.add_item('plic')
-    print(model.get_value_at(0))
-
-    widget.show()
-    sys.exit(app.exec_())
