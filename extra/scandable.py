@@ -5,6 +5,8 @@ This module contains what necessary for the Scandable plugin.
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
 
+__version__ = '1.0a1'
+
 
 class ScandableModel(QtCore.QObject):
     """
