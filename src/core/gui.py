@@ -67,8 +67,11 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
         Create links between models and graphical components.
         """
         self._menu_model.close_app.connect(self.close)
-        self._model.plugins_changed.connect(self._menu_model.plugins)
         self._menu_model.plugin_selected.connect(self._add_plugin_to_session)
+        self._menu_model.about_plugins.connect(self._about_plugins)
+
+        self._model.plugins_changed.connect(self._menu_model.plugins)
+
         self._sessions.row_changed.connect(self._plugin_view.setCurrentIndex)
         self._sessions.row_removed.connect(self._remove_widget)
 
@@ -80,74 +83,28 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
         try:
             plugin = self._model.load_plugin(plugname)
         except Exception as e:
-            self._show_message(
+            MessageDialog(
                 text='An error occurs',
                 info='The plugin {} can\'t be loaded, please check your extra folder.'
                     .format(plugname),
                 details='Error : {}'.format(str(e)),
                 icon=QtWidgets.QMessageBox.Critical,
-            )
+            ).exec_()
         else:
             self._sessions.get_model().add_item(plugin, plugname)
             self._plugin_view.addWidget(plugin)
 
+    def _about_plugins(self):
+        """
+        Show a window with information about detected plugins.
+        """
+        pass
 
     def _first_update(self):
         """
         Updates view according to models state (also update some models according to others)
         """
         self._menu_model.plugins(self._model.plugins)
-
-    def _show_message(self, **options):
-        """
-        Show a dialog to inform the client that something append.
-        :param options: a dict that can have this keys:
-            - text : the text displayed
-            - info : an additional text to inform
-            - details : an more precise text
-            - std_bts : a union of QMessageBox buttons
-            - dft_bt : the default button
-            - icon : icon displayed in the dialog
-        :return: return value of the dialog execution 
-        """
-        opts = {
-            'text': 'default',
-        }
-        opts.update(options)
-
-        dialog = QtWidgets.QMessageBox()
-        dialog.setText(opts['text'])
-        dialog.setWindowTitle(opts['text'])
-
-        try:
-            dialog.setInformativeText(opts['info'])
-        except:
-            pass
-
-        try:
-            dialog.setDetailedText(opts['details'])
-        except:
-            pass
-
-        try:
-            dialog.setStandardButtons(opts['std_bts'])
-        except:
-            pass
-
-        try:
-            dialog.setDefaultButton(opts['dft_bt'])
-        except:
-            pass
-
-        try:
-            dialog.setIcon(opts['icon'])
-        except:
-            try:
-                dialog.setIconPixmap(opts['icon'])
-            except:
-                pass
-
-        return dialog.exec_()
 
     @QtCore.pyqtSlot(int, name='_remove_widget')
     def _remove_widget(self, index):
@@ -244,6 +201,56 @@ class SessionWidget(QtWidgets.QWidget):
         :param old_index: a QModelIndex
         """
         self.row_changed.emit(new_index.row())
+
+
+class MessageDialog(QtWidgets.QMessageBox):
+    """
+    A customizable QMessageBox.
+    """
+
+    def __init__(self, **kwargs):
+        """
+        Create a new MessageDialog
+        :param kwargs: a dict that can have this keys:
+            - text : the text displayed
+            - info : an additional text to inform
+            - details : an more precise text
+            - std_bts : a union of QMessageBox buttons
+            - dft_bt : the default button
+            - icon : icon displayed in the dialog
+        """
+        super().__init__()
+        opts = {
+            'text': 'default',
+        }
+        opts.update(kwargs)
+        self.setText(opts['text'])
+        self.setWindowTitle(opts['text'])
+
+        try:
+            self.setInformativeText(opts['info'])
+        except:
+            pass
+        try:
+            self.setDetailedText(opts['details'])
+        except:
+            pass
+        try:
+            self.setStandardButtons(opts['std_bts'])
+        except:
+            pass
+        try:
+            self.setDefaultButton(opts['dft_bt'])
+        except:
+            pass
+        try:
+            self.setIcon(opts['icon'])
+        except:
+            try:
+                self.setIconPixmap(opts['icon'])
+            except:
+                pass
+
 
 class _SessionListEventHandler(QtCore.QObject):
     """

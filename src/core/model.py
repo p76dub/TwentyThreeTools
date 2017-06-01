@@ -8,6 +8,7 @@ import importlib.util
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
 import PyQt5.QtGui as QtGui
+import collections
 
 
 class TwentyThreeToolsModel(QtCore.QObject):
@@ -231,6 +232,7 @@ class TwentyThreeToolsMenuBarModel(QtCore.QObject):
     """
 
     close_app = QtCore.pyqtSignal()
+    about_plugins = QtCore.pyqtSignal()
     plugin_selected = QtCore.pyqtSignal(str)
 
     def __init__(self):
@@ -239,10 +241,10 @@ class TwentyThreeToolsMenuBarModel(QtCore.QObject):
         Plugins menu is empty.
         """
         super().__init__()
-        self._menus = {
-            'File': self._create_file_menu(),
-            'Plugins': QtWidgets.QMenu('&Plugins'),
-        }
+        self._menus = collections.OrderedDict()
+        self._menus['File'] = self._create_file_menu()
+        self._menus['Plugins'] = QtWidgets.QMenu('&Plugins')
+        self._menus['About'] = self._create_about_menu()
 
     def get_menus(self):
         """
@@ -250,7 +252,6 @@ class TwentyThreeToolsMenuBarModel(QtCore.QObject):
         :return: A menu list (list<QMenu>)
         """
         rtn = [menu for _, menu in self._menus.items()]
-        rtn.sort(key=lambda m: m.title())
         return rtn
 
     def _create_file_menu(self):
@@ -262,6 +263,18 @@ class TwentyThreeToolsMenuBarModel(QtCore.QObject):
 
         quit = menu.addAction('&Quit')
         quit.triggered.connect(lambda event: self.close_app.emit())
+
+        return menu
+
+    def _create_about_menu(self):
+        """
+        Create the about menu
+        :return: a QMenu instance
+        """
+        menu = QtWidgets.QMenu('&About')
+
+        plugins = menu.addAction('&Plugins')
+        plugins.triggered.connect(lambda event: self.about_plugins.emit())
 
         return menu
 
