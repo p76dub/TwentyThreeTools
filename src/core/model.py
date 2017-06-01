@@ -63,7 +63,6 @@ class TwentyThreeToolsModel(QtCore.QObject):
         self._locations = set(paths)
         self.locations_changed.emit(self._locations)
 
-        self._loaded_modules.clear()
         self._plugins.clear()
         self._look_for_plugins()
 
@@ -77,44 +76,40 @@ class TwentyThreeToolsModel(QtCore.QObject):
             for file in os.listdir(dir):
                 filename = file.split('.')[0]
                 if filename not in TwentyThreeToolsModel.ESCAPED:
-                    self._plugins[filename] = dir
+                    self._get_loader(filename, dir)
 
         self.plugins_changed.emit(self.plugins)
 
-    def load_plugin(self, name):
+    def _get_loader(self, name, dir):
         """
-        Load the plugin at index `index` in self.plugins.
-        :param name: the name of the plugin (str)
-        :return: an instance of the plugin (object)
-        :raise KeyError: plugin with name `name` has not been found
+        Try to get the plugin's loader. In case of success, loader is added into self._plugins
+        :param name: plugin's name (str)
+        :param dir: plugin's location (path)
         """
-        module_name, dir_path = name, self._plugins[name]
-
-        # If module has been already loaded, return a new instance
-        for mod in self._loaded_modules:
-            if mod.__name__.split('.')[-1] == module_name:
-                plugin = getattr(mod, 'loader').load()
-                return module_name + str(hash(plugin)), plugin
-
-        # Else load module, add it to the set and return the instance
         spec = importlib.util.spec_from_file_location(
-                        module_name,
-                        os.path.join(dir_path, module_name + '.py'))
+                        name,
+                        os.path.join(dir, name + '.py'))
         mod = importlib.util.module_from_spec(spec)
 
         try:
             spec.loader.exec_module(mod)
-        except FileNotFoundError:
+        except FileNotFoundError:  # Complex plugin
             spec = importlib.util.spec_from_file_location(
-                        module_name,
-                        os.path.join(dir_path, module_name, '__init__.py'))
+                        name,
+                        os.path.join(dir, name, '__init__.py'))
             mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)
 
-        self._loaded_modules.add(mod)
+        self._plugins[mod.loader.plugin_name] = mod.loader
 
-        plugin = getattr(mod, 'loader').load()
-        return module_name + str(hash(plugin)), plugin
+    def load_plugin(self, name):
+        """
+        Load the plugin with the name 'name' in self.plugins
+        :param name: the name of the plugin (str)
+        :return: an instance of the plugin (PyQt5.QtWidgets.QWidget)
+        :raise KeyError: plugin with name 'name' has not been found
+        """
+        return self._plugins[name].load()
 
 
 class SessionModel(QtCore.QObject):
@@ -311,14 +306,14 @@ class PluginLoader():
             - version -> str
             - info -> str
             - authors -> tuple<str>
-            - plugin -> PyQt5.QtWidgets.QWidget
+            - plugin -> PyQt5.QtWidgets.QWidget.__class__
         """
         self._attributes = {
             'name' : str(hash(self)),
             'version' : 'unknown',
             'info' : 'No information',
             'authors' : (),
-            'plugin' : QtWidgets.QWidget(flags=QtCore.Qt.Widget),
+            'plugin' : QtWidgets.QWidget,
         }
 
         self._attributes.update(kwargs)
@@ -360,4 +355,4 @@ class PluginLoader():
         Load the plugin.
         :return: an instance of PyQt5.QtWidgets.QWidget
         """
-        return self._attributes['plugin']
+        return self._attributes['plugin']()

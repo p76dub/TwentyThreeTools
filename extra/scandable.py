@@ -231,5 +231,5 @@ loader = src.core.model.PluginLoader(
     version=__version__,
     info='This plugin allows testing words',
     authors=('p76dub'),
-    plugin=Scandable(),
+    plugin=Scandable,
 )

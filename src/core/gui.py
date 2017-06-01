@@ -78,7 +78,7 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
         :param plugname: the name of the desired plugin (str)
         """
         try:
-            name, plugin = self._model.load_plugin(plugname)
+            plugin = self._model.load_plugin(plugname)
         except Exception as e:
             self._show_message(
                 text='An error occurs',
@@ -88,7 +88,7 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
                 icon=QtWidgets.QMessageBox.Critical,
             )
         else:
-            self._sessions.get_model().add_item(plugin, name)
+            self._sessions.get_model().add_item(plugin, plugname)
             self._plugin_view.addWidget(plugin)
 
 

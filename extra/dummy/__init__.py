@@ -7,9 +7,9 @@ import dummy.dummyPlugin
 __version__ = '1.1'
 
 loader = src.core.model.PluginLoader(
-    name='DummyPlugin',
+    name='Test',  # No reason module's name is the same as plugin's name
     version=__version__,
     info='It\'s just a DummyPlugin, nothing to say !',
     authors=('p76dub'),
-    plugin=dummy.dummyPlugin.DummyPlugin(),
+    plugin=dummy.dummyPlugin.DummyPlugin,
 )
