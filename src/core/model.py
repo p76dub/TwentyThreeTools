@@ -15,6 +15,7 @@ class TwentyThreeToolsModel(QtCore.QObject):
     TwentyThreeTools' model. Hold sessions and search for plugins.
     """
 
+    ESCAPED = ['__init__', '__pycache__']
     locations_changed = QtCore.pyqtSignal(frozenset)
     plugins_changed = QtCore.pyqtSignal(list)
 
@@ -75,7 +76,7 @@ class TwentyThreeToolsModel(QtCore.QObject):
         for dir in dirs:
             for file in os.listdir(dir):
                 filename = file.split('.')[0]
-                if os.path.isfile(os.path.join(dir, file)) and filename != '__init__':
+                if filename not in TwentyThreeToolsModel.ESCAPED:
                     self._plugins[filename] = dir
 
         self.plugins_changed.emit(self.plugins)
@@ -92,17 +93,27 @@ class TwentyThreeToolsModel(QtCore.QObject):
         # If module has been already loaded, return a new instance
         for mod in self._loaded_modules:
             if mod.__name__.split('.')[-1] == module_name:
-                plugin = getattr(mod, module_name.capitalize())()
+                plugin = getattr(mod, 'loader').load()
                 return module_name + str(hash(plugin)), plugin
 
         # Else load module, add it to the set and return the instance
-        spec = importlib.util.spec_from_file_location(module_name,
-                                                      os.path.join(dir_path, module_name + '.py'))
+        spec = importlib.util.spec_from_file_location(
+                        module_name,
+                        os.path.join(dir_path, module_name + '.py'))
         mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
+
+        try:
+            spec.loader.exec_module(mod)
+        except FileNotFoundError:
+            spec = importlib.util.spec_from_file_location(
+                        module_name,
+                        os.path.join(dir_path, module_name, '__init__.py'))
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+
         self._loaded_modules.add(mod)
 
-        plugin = getattr(mod, module_name.capitalize())()
+        plugin = getattr(mod, 'loader').load()
         return module_name + str(hash(plugin)), plugin
 
 

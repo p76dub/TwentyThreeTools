@@ -5,7 +5,9 @@ This module contains what necessary for the Scandable plugin.
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
 
-__version__ = '1.0a1'
+import src.core.model
+
+__version__ = '1.0a2'
 
 
 class ScandableModel(QtCore.QObject):
@@ -224,11 +226,10 @@ class Scandable(QtWidgets.QWidget):
         """
         pass
 
-if __name__ == '__main__':
-    import sys
-
-    app = QtWidgets.QApplication(sys.argv)
-    disp = Scandable()
-    disp.show()
-
-    sys.exit(app.exec_())
+loader = src.core.model.PluginLoader(
+    name='Scandable',
+    version=__version__,
+    info='This plugin allows testing words',
+    authors=('p76dub'),
+    plugin=Scandable(),
+)

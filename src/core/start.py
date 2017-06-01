@@ -23,8 +23,11 @@ class Launcher(object):
         # Change work directory
         os.chdir(self._app_path)
 
-        # Add sources to PYTHONPATH
+        # Add project to PYTHONPATH
         sys.path.append(self._app_path)
+
+        # Add plugin folder to PYTHONPATH
+        sys.path.append(os.path.join(self._app_path, 'extra'))
 
     @property
     def app_path(self):

@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 
-import src.core.model
-import PyQt5.QtWidgets as QtWidgets
 import PyQt5.QtCore as QtCore
-
-__version__ = '1.1'
+import PyQt5.QtWidgets as QtWidgets
 
 
 class DummyPlugin(QtWidgets.QWidget):
@@ -30,12 +27,3 @@ class DummyPlugin(QtWidgets.QWidget):
         """
         layout = QtWidgets.QGridLayout(self)
         layout.addWidget(self._poor_label, 1, 1)
-
-
-loader = src.core.model.PluginLoader(
-    name='DummyPlugin',
-    version=__version__,
-    info='It\'s just a DummyPlugin, nothing to say !',
-    authors=('p76dub'),
-    plugin=DummyPlugin(),
-)
