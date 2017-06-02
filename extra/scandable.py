@@ -5,7 +5,7 @@ This module contains what necessary for the Scandable plugin.
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
 
-import src.core.model
+import src.core.utils
 
 __version__ = '1.0a2'
 
@@ -226,10 +226,10 @@ class Scandable(QtWidgets.QWidget):
         """
         pass
 
-loader = src.core.model.PluginLoader(
+loader = src.core.utils.PluginLoader(
     name='Scandable',
     version=__version__,
     info='This plugin allows testing words',
-    authors=('p76dub'),
+    authors=('p76dub',),
     plugin=Scandable,
 )
