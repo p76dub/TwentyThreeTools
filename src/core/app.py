@@ -49,6 +49,14 @@ class TwentyThreeToolsModel(QtCore.QObject):
         return list(self._plugins.keys())
 
     @property
+    def loaders(self):
+        """
+        A list of available loaders.
+        :return: a list of loader (src.core.utils.PluginLoader)
+        """
+        return list(self._plugins.values())
+
+    @property
     def locations(self):
         """
         A frozenset of locations where plugins are.
@@ -238,6 +246,8 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
         for menu in self._menu_model.get_menus():
             self.menuBar().addMenu(menu)
 
+        self._about_plugins_dialog = src.core.widgets.dialog.AboutPlugins(self._model.loaders)
+
         self.setWindowTitle('TwentyThreeTools')
         self.setMinimumSize(600, 400)
 
@@ -286,7 +296,7 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
         """
         Show a window with information about detected plugins.
         """
-        pass
+        self._about_plugins_dialog.show()
 
     def _first_update(self):
         """

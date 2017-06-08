@@ -159,6 +159,7 @@ class SessionWidget(QtWidgets.QWidget):
         Create the components in the final widget.
         """
         self._list = QtWidgets.QListView()
+        self._list.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self._list.setModel(self._model.get_list_model())
 
     def _place_components(self):
