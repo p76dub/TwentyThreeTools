@@ -235,13 +235,9 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
         Create each graphical component.
         """
         self._plugin_view = QtWidgets.QStackedWidget()
-        self._plugin_view.setMinimumSize(400, 400)
+        self._plugin_view.setMinimumSize(600, 500)
 
         self._sessions = src.core.widgets.session.SessionWidget()
-
-        self._main_view = QtWidgets.QSplitter(self)
-        self._main_view.setStretchFactor(0, 1)
-        self._main_view.setStretchFactor(1, 3)
 
         for menu in self._menu_model.get_menus():
             self.menuBar().addMenu(menu)
@@ -249,16 +245,22 @@ class TwentyThreeTools(QtWidgets.QMainWindow):
         self._about_plugins_dialog = src.core.widgets.dialog.AboutPlugins(self._model.loaders)
 
         self.setWindowTitle('TwentyThreeTools')
-        self.setMinimumSize(600, 400)
 
     def _place_components(self):
         """
         Place components on the widget.
         """
-        self._main_view.addWidget(self._sessions)
-        self._main_view.addWidget(self._plugin_view)
+        layout = QtWidgets.QGridLayout()
+        main_widget = QtWidgets.QWidget(self, flags=QtCore.Qt.Widget)
 
-        self.setCentralWidget(self._main_view)
+        layout.addWidget(self._sessions, 0, 0)
+        layout.addWidget(self._plugin_view, 0, 1)
+
+        layout.setColumnStretch(0, 0)
+        layout.setColumnStretch(1, 1)
+
+        main_widget.setLayout(layout)
+        self.setCentralWidget(main_widget)
 
     def _create_controller(self):
         """
