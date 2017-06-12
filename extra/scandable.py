@@ -10,7 +10,7 @@ import PyQt5.QtWidgets as QtWidgets
 import src.core.utils
 import src.core.widgets.dialog
 
-__version__ = '1.0'
+__version__ = '1.1'
 
 
 class ScandableModel(QtCore.QObject):
@@ -82,6 +82,23 @@ class ScandableModel(QtCore.QObject):
         """
         self._file = file
         self._offset = 0
+
+    def get_num(self):
+        """
+        Get the number that letters' packets must reach.
+        :return: (int)
+        """
+        return self._num
+
+    def set_num(self, number):
+        """
+        Set the number that letters' packets must reach.
+        :param number: the new number (positive integer)
+        """
+        if number < 1:
+            raise AssertionError('Positive number expected')
+
+        self._num = int(number)
 
     def set_options(self, options):
         """
@@ -248,6 +265,8 @@ class Scandable(QtWidgets.QWidget):
         self._no_blank_box.setText('Remove empty strings in result')
         self._no_repeat_box = QtWidgets.QCheckBox(self)
         self._no_repeat_box.setText('Remove duplicates in the result')
+        self._parse_number = QtWidgets.QSpinBox(self)
+        self._parse_number.setMinimum(0)
 
         self._analyse_button = QtWidgets.QPushButton(self)
         self._analyse_button.setText('Analyse')
@@ -277,6 +296,8 @@ class Scandable(QtWidgets.QWidget):
         opt_layout.addWidget(self._per_line_box, 1, 0, 1, 2)
         opt_layout.addWidget(self._no_repeat_box, 2, 0, 1, 2)
         opt_layout.addWidget(self._no_blank_box, 3, 0, 1, 2)
+        opt_layout.addWidget(QtWidgets.QLabel(text='Parse number : '), 4, 0)
+        opt_layout.addWidget(self._parse_number, 4, 1)
 
         options_box.setLayout(opt_layout)
 
@@ -316,6 +337,8 @@ class Scandable(QtWidgets.QWidget):
         options = self._model.get_options()
         self._no_repeat_box.setChecked(options['no-repeat'])
         self._no_blank_box.setChecked(options['no-blank'])
+
+        self._parse_number.setValue(self._model.get_num())
 
     def _on_no_repeat_click(self):
         """
@@ -357,6 +380,7 @@ class Scandable(QtWidgets.QWidget):
         """
         per_line = self._per_line_box.isChecked()
         self._set_separators()
+        self._model.set_num(self._parse_number.value())
 
         try:
             if per_line:
