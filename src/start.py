@@ -16,15 +16,18 @@ class Launcher(object):
         Create a new Launcher. PYTHONPATH is set and current work directory has changed.
         :return: a new Launcher's instance
         """
-        self._app_path = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-3])
+        self._app_path = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-2])
         self._app = None
         self._main_widget = None
 
         # Change work directory
         os.chdir(self._app_path)
 
-        # Add sources to PYTHONPATH
+        # Add project to PYTHONPATH
         sys.path.append(self._app_path)
+
+        # Add plugin folder to PYTHONPATH
+        sys.path.append(os.path.join(self._app_path, 'extra'))
 
     @property
     def app_path(self):
@@ -47,10 +50,10 @@ class Launcher(object):
         Launch the application.
         :return: exit code of the application (int)
         """
-        import src.core.gui
+        import src.core.app
 
         self._app = Qtwidgets.QApplication(sys.argv)
-        self._main_widget = src.core.gui.TwentyThreeTools()
+        self._main_widget = src.core.app.TwentyThreeTools()
 
         self._main_widget.show()
         return self._app.exec_()
