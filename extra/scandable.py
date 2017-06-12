@@ -16,7 +16,7 @@ __version__ = '1.0'
 class ScandableModel(QtCore.QObject):
     """
     ScandableModel's instances allow, from a file, what words are n-Scandables.
-    Carreful only Latin-1 caracters are allowed.
+    Careful only Latin-1 characters are allowed.
     :inv:
         get_separators() is not None
         len(get_separators()) >= 1
