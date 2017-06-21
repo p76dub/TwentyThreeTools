@@ -3,6 +3,7 @@
 This module contains what necessary for the Scandable plugin.
 """
 import string
+import collections
 
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
@@ -224,7 +225,7 @@ class ScandableModel(QtCore.QObject):
         if self._options['no-blank']:
             result = [r for r in result if r != '']
         if self._options['no-repeat']:
-            result = list(set(result))
+            result = list(collections.OrderedDict.fromkeys(result))
         if self._options['sort-output']:
             result.sort()
 
