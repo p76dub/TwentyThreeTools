@@ -3,10 +3,12 @@
 """
 This module contains everything related to the plugin Perfect.
 """
+import sys
 import PyQt5.QtWidgets as QtWidgets
 import PyQt5.QtCore as QtCore
 
 import src.core.utils
+import src.core.widgets.dialog
 
 __version__ = '1.0a1'
 
@@ -70,8 +72,9 @@ class NPerfectNumberModel(object):
         :param ignore: default is False. If True, ValueError is not thrown and None is added to
         the result.
         :throws ValueError: number is not a number
+        :return: the list of n-perfect number included in number_list
         """
-        return [self.is_number_perfect(n, ignore) for n in number_list]
+        return [n for n in number_list if self.is_number_perfect(n, ignore)]
 
 
 class NPerfectNumber(QtWidgets.QWidget):
@@ -81,6 +84,7 @@ class NPerfectNumber(QtWidgets.QWidget):
     DEFAULT_NUMBER = 23
     DIRECT_INPUT = 0
     RANGE_INPUT = 1
+    MAX_INPUT_NUMBER = 2 ** 31 - 1
 
     def __init__(self, parent=None):
         """
@@ -106,15 +110,24 @@ class NPerfectNumber(QtWidgets.QWidget):
         """
         self._by_direct_input = QtWidgets.QRadioButton(self, text='By direct input')
         self._by_direct_input.setChecked(True)
+
         self._by_range_input = QtWidgets.QRadioButton(self, text='By range input')
+
         self._input_group = QtWidgets.QButtonGroup(self)
         self._input_group.addButton(self._by_direct_input, NPerfectNumber.DIRECT_INPUT)
         self._input_group.addButton(self._by_range_input, NPerfectNumber.RANGE_INPUT)
+
         self._input_box = QtWidgets.QSpinBox(self)
+        self._input_box.setMaximum(NPerfectNumber.MAX_INPUT_NUMBER)
+
         self._low_input_box = QtWidgets.QSpinBox(self)
+        self._low_input_box.setMaximum(NPerfectNumber.MAX_INPUT_NUMBER)
+
         self._high_input_box = QtWidgets.QSpinBox(self)
+        self._high_input_box.setMaximum(NPerfectNumber.MAX_INPUT_NUMBER)
 
         self._number_spinbox = QtWidgets.QSpinBox(self)
+        self._number_spinbox.setMaximum(NPerfectNumber.MAX_INPUT_NUMBER)
 
         self._output_field = QtWidgets.QTextEdit(self)
         self._output_field.setMaximumWidth(400)
@@ -169,21 +182,50 @@ class NPerfectNumber(QtWidgets.QWidget):
         Connect events and handlers.
         """
         self._analyse_button.clicked.connect(self._on_analyse_click)
+        self._input_group.buttonClicked[int].connect(self._switch_field_state)
 
     def _on_analyse_click(self):
         """
         Called when the user click on analyse button.
         """
-        pass
-
+        self._model.set_number(self._number_spinbox.value())
+        if self._input_group.checkedId() == NPerfectNumber.RANGE_INPUT:
+            low = self._low_input_box.value()
+            high = self._high_input_box.value()
+            if high < low:
+                src.core.widgets.dialog.MessageDialog(
+                    text='ValueError',
+                    info='An error occurs and analyse failed',
+                    details='Lowest value ({}) is higher than the highest value ({})'.format(
+                        low, high),
+                    icon=QtWidgets.QMessageBox.Critical,
+                ).exec_()
+                return
+            result = self._model.are_numbers_perfect([i for i in range(low, high + 1)])
+        else:
+            result = self._model.is_number_perfect(self._input_box.value())
+        self._output_field.setText(str(result))
 
     def _refresh(self):
         """
         Refresh for the first time the view, in order to have both models and views synchronized.
         """
         self._number_spinbox.setValue(self._model.get_number())
+        self._switch_field_state(self._input_group.checkedId())
 
-
+    def _switch_field_state(self, id):
+        """
+        Switch fields' state according to id
+        :param id: NPerfectNumber.RANGE_INPUT or NPerfectNumber.DIRECT_INPUT
+        """
+        if id == NPerfectNumber.RANGE_INPUT:
+            self._low_input_box.setEnabled(True)
+            self._high_input_box.setEnabled(True)
+            self._input_box.setEnabled(False)
+        else:
+            self._input_box.setEnabled(True)
+            self._low_input_box.setEnabled(False)
+            self._high_input_box.setEnabled(False)
 
 loader = src.core.utils.PluginLoader(
     name='Perfect',
