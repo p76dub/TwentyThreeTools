@@ -49,9 +49,9 @@ class ScandableModel(QtCore.QObject):
         self._offset = 0
         self._separators = set(separators)
         self._options = {
-            'no-blank' : True,
-            'no-repeat' : False,
-            'sort-output' : False
+            'no-blank': True,
+            'no-repeat': False,
+            'sort-output': False
         }
 
     def get_file(self):
@@ -189,7 +189,7 @@ class ScandableModel(QtCore.QObject):
             if sentence_lower[end] in separators:
                 word = sentence_lower[start:end]
                 start = end + 1
-            elif  end == len(sentence_lower) - 1:
+            elif end == len(sentence_lower) - 1:
                 word = sentence_lower[start:end + 1]
 
             # Run analysis
