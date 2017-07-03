@@ -13,4 +13,8 @@ partir de la version 1.1rc1. Il propose d'analyser un fichier texte et d'en sort
 scnadables. Ce module, hautement paramétrable, permet entres autres de modifier le nombre à 
 atteindre (23 par défaut), les séparateurs de mots, mais aussi dinfluer sur le réultat en enleant
  les mots vides et les doublons. Enfin, il est possible d'analyser ligne par ligne plutôt que le 
- fichier entier. 
+ fichier entier.
+
+## Perfect
+Ce plugin vous permet de tester si un nombre (ou une plage de nombres) est n-parfait. C'est à 
+dire que la somme de ses diviseurs propres vaut n. Disponible depuis la version 1.2rc1.
