@@ -3,6 +3,7 @@
 This module contains what necessary for the Scandable plugin.
 """
 import string
+import collections
 
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
@@ -10,7 +11,7 @@ import PyQt5.QtWidgets as QtWidgets
 import src.core.utils
 import src.core.widgets.dialog
 
-__version__ = '1.1'
+__version__ = '1.2'
 
 
 class ScandableModel(QtCore.QObject):
@@ -48,8 +49,9 @@ class ScandableModel(QtCore.QObject):
         self._offset = 0
         self._separators = set(separators)
         self._options = {
-            'no-blank' : True,
-            'no-repeat' : False,
+            'no-blank': True,
+            'no-repeat': False,
+            'sort-output': False
         }
 
     def get_file(self):
@@ -106,6 +108,7 @@ class ScandableModel(QtCore.QObject):
         Authorized keys are :
             - no-repeat : words in the result are unique
             - no-blank : no empty strings in the result
+            - sort-output : sort the output
         :param options: the dictionary
         """
         self._options.update(options)
@@ -186,7 +189,7 @@ class ScandableModel(QtCore.QObject):
             if sentence_lower[end] in separators:
                 word = sentence_lower[start:end]
                 start = end + 1
-            elif  end == len(sentence_lower) - 1:
+            elif end == len(sentence_lower) - 1:
                 word = sentence_lower[start:end + 1]
 
             # Run analysis
@@ -222,7 +225,9 @@ class ScandableModel(QtCore.QObject):
         if self._options['no-blank']:
             result = [r for r in result if r != '']
         if self._options['no-repeat']:
-            result = list(set(result))
+            result = list(collections.OrderedDict.fromkeys(result))
+        if self._options['sort-output']:
+            result.sort()
 
         return result
 
@@ -258,6 +263,9 @@ class Scandable(QtWidgets.QWidget):
         self._file_input_button = QtWidgets.QPushButton(self)
         self._file_input_button.setText('Load')
 
+        self._sort_output_box = QtWidgets.QCheckBox(self)
+        self._sort_output_box.setText('Sort the output')
+
         self._separators_field = QtWidgets.QLineEdit(self)
         self._per_line_box = QtWidgets.QCheckBox(self)
         self._per_line_box.setText('Analyse one line')
@@ -273,6 +281,7 @@ class Scandable(QtWidgets.QWidget):
 
         self._output_field = QtWidgets.QTextEdit(self)
         self._output_field.setMaximumWidth(400)
+        self._output_field.setReadOnly(True)
 
     def _place_components(self):
         """
@@ -287,17 +296,25 @@ class Scandable(QtWidgets.QWidget):
 
         input_box.setLayout(in_layout)
 
+        output_opts_box = QtWidgets.QGroupBox(self)
+        output_opts_box.setTitle('Output Options')
+
+        out_opts_layout = QtWidgets.QGridLayout(output_opts_box)
+        out_opts_layout.addWidget(self._sort_output_box, 0, 0)
+        out_opts_layout.addWidget(self._no_repeat_box, 1, 0)
+        out_opts_layout.addWidget(self._no_blank_box, 2, 0)
+
+        output_opts_box.setLayout(out_opts_layout)
+
         options_box = QtWidgets.QGroupBox(self)
-        options_box.setTitle('Options')
+        options_box.setTitle('Algorithm Options')
 
         opt_layout = QtWidgets.QGridLayout(options_box)
         opt_layout.addWidget(QtWidgets.QLabel(text='Separators : '), 0, 0)
         opt_layout.addWidget(self._separators_field, 0, 1)
-        opt_layout.addWidget(self._per_line_box, 1, 0, 1, 2)
-        opt_layout.addWidget(self._no_repeat_box, 2, 0, 1, 2)
-        opt_layout.addWidget(self._no_blank_box, 3, 0, 1, 2)
-        opt_layout.addWidget(QtWidgets.QLabel(text='Parse number : '), 4, 0)
-        opt_layout.addWidget(self._parse_number, 4, 1)
+        opt_layout.addWidget(QtWidgets.QLabel(text='Parse number : '), 1, 0)
+        opt_layout.addWidget(self._parse_number, 1, 1)
+        opt_layout.addWidget(self._per_line_box, 2, 0, 1, 2)
 
         options_box.setLayout(opt_layout)
 
@@ -311,13 +328,10 @@ class Scandable(QtWidgets.QWidget):
 
         main_layout = QtWidgets.QGridLayout(self)
         main_layout.addWidget(input_box, 0, 0)
-        main_layout.addWidget(options_box, 1, 0)
-        main_layout.addWidget(self._analyse_button, 2, 0)
-        main_layout.addWidget(output_box, 0, 1, 3, 1)
-
-        main_layout.setRowStretch(0, 0)
-        main_layout.setRowStretch(1, 1)
-        main_layout.setRowStretch(2, 0)
+        main_layout.addWidget(output_opts_box, 1, 0)
+        main_layout.addWidget(options_box, 2, 0)
+        main_layout.addWidget(self._analyse_button, 3, 0)
+        main_layout.addWidget(output_box, 0, 1, 4, 1)
 
         self.setLayout(main_layout)
 
@@ -329,6 +343,7 @@ class Scandable(QtWidgets.QWidget):
         self._analyse_button.clicked.connect(self._run_analysis)
         self._no_blank_box.clicked.connect(self._on_no_blank_click)
         self._no_repeat_box.clicked.connect(self._on_no_repeat_click)
+        self._sort_output_box.clicked.connect(self._on_sort_output_click)
 
     def _refresh(self):
         """
@@ -337,6 +352,7 @@ class Scandable(QtWidgets.QWidget):
         options = self._model.get_options()
         self._no_repeat_box.setChecked(options['no-repeat'])
         self._no_blank_box.setChecked(options['no-blank'])
+        self._sort_output_box.setChecked(options['sort-output'])
 
         self._parse_number.setValue(self._model.get_num())
 
@@ -353,6 +369,13 @@ class Scandable(QtWidgets.QWidget):
         model.
         """
         self._model.set_options({'no-blank': self._no_blank_box.isChecked()})
+
+    def _on_sort_output_click(self):
+        """
+        Called when the user click on checkbox sort_output. Controls the 'sort-output' option in the
+        model.
+        """
+        self._model.set_options({'sort-output' : self._sort_output_box.isChecked()})
 
     def _open_file(self):
         """
