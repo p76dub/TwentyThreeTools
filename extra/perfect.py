@@ -4,13 +4,15 @@
 This module contains everything related to the plugin Perfect.
 """
 import sys
+import math
+
 import PyQt5.QtWidgets as QtWidgets
 import PyQt5.QtCore as QtCore
 
 import src.core.utils
 import src.core.widgets.dialog
 
-__version__ = '1.0a1'
+__version__ = '1.0'
 
 
 class NPerfectNumberModel(object):
@@ -59,9 +61,12 @@ class NPerfectNumberModel(object):
             return None
         else:
             perfect_sum = 0
-            for i in range(1, num):
+            for i in range(1, int(math.sqrt(num)) + 1):
                 if num % i == 0:
                     perfect_sum += i
+                    other = num / i
+                    if other != i and other != num:
+                        perfect_sum += other
             return perfect_sum == self._number
 
     def are_numbers_perfect(self, number_list, ignore=False):
@@ -201,9 +206,27 @@ class NPerfectNumber(QtWidgets.QWidget):
                     icon=QtWidgets.QMessageBox.Critical,
                 ).exec_()
                 return
-            result = self._model.are_numbers_perfect([i for i in range(low, high + 1)])
+            try:
+                result = self._model.are_numbers_perfect([i for i in range(low, high + 1)])
+            except Exception as e:
+                src.core.widgets.dialog.MessageDialog(
+                    text='An error occurs',
+                    info='An error occurs during calculation',
+                    details='Error was : {}'.format(str(e)),
+                    icon=QtWidgets.QMessageBox.Critical,
+                ).exec_()
+                return
         else:
-            result = self._model.is_number_perfect(self._input_box.value())
+            try:
+                result = self._model.is_number_perfect(self._input_box.value())
+            except Exception as e:
+                src.core.widgets.dialog.MessageDialog(
+                    text='An error occurs',
+                    info='An error occurs during calculation',
+                    details='Error was : {}'.format(str(e)),
+                    icon=QtWidgets.QMessageBox.Critical,
+                ).exec_()
+                return
         self._output_field.setText(str(result))
 
     def _refresh(self):
